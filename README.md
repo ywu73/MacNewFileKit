@@ -76,6 +76,27 @@ Ad hoc signing and the temporary filesystem exception are for local testing
 only. Distribution to other Macs still requires an appropriate Apple signing
 identity, notarization, and a release-safe filesystem-access design.
 
+## Local installation
+
+After `scripts/verify.sh` succeeds, install the ad hoc build in a stable location:
+
+```sh
+scripts/install-local.sh
+```
+
+The installer verifies the source and installed signatures, places the app at
+`/Applications/MacNewFileKit.app`, disables the pre-rename RightClick extension,
+registers the embedded MacNewFileKit Finder extension, and reloads Finder. It
+refuses to overwrite an existing installation.
+
+Open the app once to inspect the extension status or use **Manage Finder
+Extensions** if macOS still requires approval. After the extension is enabled,
+the settings app may be quit; Finder loads the extension independently.
+
+This installation path is for local development only. It uses the ad hoc build
+and temporary filesystem exception described above, and is not a distributable
+release.
+
 ## Verification boundary
 
 Unit tests validate filename safety, content, collision handling, concurrent
