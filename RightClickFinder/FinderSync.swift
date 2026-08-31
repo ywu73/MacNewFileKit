@@ -5,6 +5,8 @@ import RightClickShared
 
 @objc(FinderSync)
 final class FinderSync: FIFinderSync {
+    private static let customTemplateTagBase = 1_000
+
     private let controller = FIFinderSyncController.default()
     private let creator = FileCreator()
     private let targetResolver = FinderTargetResolver()
@@ -44,21 +46,19 @@ final class FinderSync: FIFinderSync {
                 action: #selector(createBuiltInFile(_:)),
                 keyEquivalent: ""
             )
-            item.target = self
-            item.representedObject = template.rawValue
+            item.tag = FileTemplate.allCases.firstIndex(of: template).map { $0 + 1 } ?? 0
             submenu.addItem(item)
         }
 
         if !preferences.customTemplates.isEmpty {
             submenu.addItem(.separator())
-            for customTemplate in preferences.customTemplates {
+            for (index, customTemplate) in preferences.customTemplates.enumerated() {
                 let item = NSMenuItem(
                     title: customTemplate.displayName,
                     action: #selector(createCustomFile(_:)),
                     keyEquivalent: ""
                 )
-                item.target = self
-                item.representedObject = customTemplate.id.uuidString
+                item.tag = Self.customTemplateTagBase + index
                 submenu.addItem(item)
             }
         }
@@ -71,8 +71,7 @@ final class FinderSync: FIFinderSync {
 
     @objc
     private func createBuiltInFile(_ sender: NSMenuItem) {
-        guard let rawValue = sender.representedObject as? String,
-              let template = FileTemplate(rawValue: rawValue),
+        guard let template = builtInTemplate(for: sender),
               let directoryURL = targetDirectoryURL()
         else {
             return
@@ -91,15 +90,10 @@ final class FinderSync: FIFinderSync {
 
     @objc
     private func createCustomFile(_ sender: NSMenuItem) {
-        guard let identifier = sender.representedObject as? String,
-              let id = UUID(uuidString: identifier),
+        let preferences = repository?.load() ?? .default
+        guard let template = customTemplate(for: sender, in: preferences),
               let directoryURL = targetDirectoryURL()
         else {
-            return
-        }
-
-        let preferences = repository?.load() ?? .default
-        guard let template = preferences.customTemplates.first(where: { $0.id == id }) else {
             return
         }
 
@@ -113,11 +107,37 @@ final class FinderSync: FIFinderSync {
         )
     }
 
+    private func builtInTemplate(for item: NSMenuItem) -> FileTemplate? {
+        let index = item.tag - 1
+        if FileTemplate.allCases.indices.contains(index) {
+            return FileTemplate.allCases[index]
+        }
+
+        return FileTemplate.allCases.first {
+            localized($0.displayName) == item.title
+        }
+    }
+
+    private func customTemplate(
+        for item: NSMenuItem,
+        in preferences: RightClickPreferences
+    ) -> CustomFileTemplate? {
+        let index = item.tag - Self.customTemplateTagBase
+        if preferences.customTemplates.indices.contains(index) {
+            return preferences.customTemplates[index]
+        }
+
+        return preferences.customTemplates.first {
+            $0.displayName == item.title
+        }
+    }
+
     private func performCreation(_ request: FileCreationRequest) {
         do {
             let created = try creator.create(request)
             NSWorkspace.shared.activateFileViewerSelecting([created.url])
         } catch {
+            NSLog("RightClick could not create file: %@", error.localizedDescription)
             showCreationError(error)
         }
     }
