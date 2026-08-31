@@ -118,10 +118,19 @@ final class FinderSync: FIFinderSync {
             let created = try creator.create(request)
             NSWorkspace.shared.activateFileViewerSelecting([created.url])
         } catch {
+            showCreationError(error)
+        }
+    }
+
+    private func showCreationError(_ error: Error) {
+        let messageText = localized("Could Not Create File")
+        let informativeText = error.localizedDescription
+
+        Task { @MainActor in
             let alert = NSAlert()
             alert.alertStyle = .warning
-            alert.messageText = localized("Could Not Create File")
-            alert.informativeText = error.localizedDescription
+            alert.messageText = messageText
+            alert.informativeText = informativeText
             alert.addButton(withTitle: "OK")
             alert.runModal()
         }

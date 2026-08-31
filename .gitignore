@@ -5,3 +5,5 @@ DerivedData/
 build/
 *.xcuserstate
 xcuserdata/
+RightClick.xcodeproj/
+Config/*-Info.plist

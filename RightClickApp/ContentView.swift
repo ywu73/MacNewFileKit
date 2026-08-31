@@ -30,7 +30,9 @@ struct ContentView: View {
                     "Default base name",
                     text: Binding(
                         get: { model.preferences.defaultBaseName },
-                        set: model.updateDefaultBaseName
+                        set: { value in
+                            model.updateDefaultBaseName(value)
+                        }
                     )
                 )
 
@@ -41,8 +43,10 @@ struct ContentView: View {
                             set: { model.setEnabled($0, for: template) }
                         )
                     ) {
-                        Text(LocalizedStringKey(template.displayName))
-                            + Text(" (.\(template.fileExtension))")
+                        Text(
+                            verbatim: "\(localizedTemplateName(template)) "
+                                + "(.\(template.fileExtension))"
+                        )
                     }
                 }
             }
@@ -54,7 +58,9 @@ struct ContentView: View {
                             .foregroundStyle(.secondary)
                     }
                 }
-                .onDelete(perform: model.removeCustomTemplates)
+                .onDelete { offsets in
+                    model.removeCustomTemplates(at: offsets)
+                }
 
                 HStack {
                     TextField("Name", text: $customDisplayName)
@@ -80,6 +86,12 @@ struct ContentView: View {
         }
         .formStyle(.grouped)
         .padding()
-        .onAppear(perform: model.refreshExtensionStatus)
+        .onAppear {
+            model.refreshExtensionStatus()
+        }
+    }
+
+    private func localizedTemplateName(_ template: FileTemplate) -> String {
+        NSLocalizedString(template.displayName, comment: "Built-in file template name")
     }
 }

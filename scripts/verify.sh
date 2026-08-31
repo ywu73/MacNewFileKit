@@ -20,6 +20,7 @@ xcodebuild \
     -project RightClick.xcodeproj \
     -scheme RightClick \
     -configuration Debug \
+    -destination 'platform=macOS,arch=arm64' \
     -derivedDataPath .build/xcode \
     CODE_SIGNING_ALLOWED=NO \
     build
