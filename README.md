@@ -35,12 +35,11 @@ creation therefore form one exclusive operation instead of a vulnerable
 - macOS 13 or later
 - Full Xcode installation
 - XcodeGen to generate `RightClick.xcodeproj` from `project.yml`
-- A development team with an App Group entitlement
+- No Apple Developer account is required for local ad hoc builds
 
 The checked-in identifiers use `com.example.RightClick` and
 `group.com.example.RightClick` placeholders. Replace both bundle identifiers
-and the App Group value in `project.yml` and `Config/*.entitlements` before
-signing a runnable build.
+and the App Group value before creating a distributable build.
 
 ## Development
 
@@ -56,17 +55,33 @@ After installing full Xcode and XcodeGen:
 scripts/verify.sh
 ```
 
-To run the Finder integration, configure real bundle/App Group identifiers,
-select a development team, build the app, then use **Manage Finder Extensions**
-inside RightClick. The extension currently monitors `/`; this deliberate MVP
-choice must be validated on a signed build across local folders, Desktop, and
+The verification script builds with Xcode-managed signing disabled, then signs
+the embedded Finder extension before the containing app with a local ad hoc
+identity (`codesign --sign -`). It preserves the sandbox and App Group
+entitlements and finishes with strict signature verification. The signed app is
+written to `.build/xcode/Build/Products/Debug/RightClick.app`.
+
+The ad hoc Finder extension uses
+`Config/RightClickFinder.local.entitlements`, which adds a temporary `/`
+read/write sandbox exception so the global Finder workflow can be exercised on
+the developer's Mac. The normal `Config/RightClickFinder.entitlements` does not
+contain that exception.
+
+To run the Finder integration, launch that app and use **Manage Finder
+Extensions** inside RightClick. The extension currently monitors `/`; this
+deliberate MVP choice must be validated across local folders, Desktop, and
 external volumes before it is treated as supported behavior.
+
+Ad hoc signing and the temporary filesystem exception are for local testing
+only. Distribution to other Macs still requires an appropriate Apple signing
+identity, notarization, and a release-safe filesystem-access design.
 
 ## Verification boundary
 
 Unit tests validate filename safety, content, collision handling, concurrent
-creation, and shared preference persistence. A signed Finder integration test
-still requires full Xcode and manual extension enablement on macOS.
+creation, and shared preference persistence. The build script validates the
+local ad hoc signature; Finder integration still requires extension enablement
+and live Finder interaction on macOS.
 
 `scripts/verify.sh` is deliberately fail-closed: it exits unsuccessfully when
 full Xcode or XcodeGen is missing instead of reporting a skipped integration

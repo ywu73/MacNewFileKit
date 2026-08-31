@@ -28,15 +28,27 @@ mechanism. RightClick's use is technically aligned with the contextual-menu API
 but outside Apple's recommended product archetype. This is a release and App
 Review risk, not evidence that the API cannot work.
 
-## Unverified assumptions
+## Verified local behavior
+
+An ad hoc signed Debug build is recognized and enabled by `pluginkit`, and the
+Finder background menu appears with Text Document, Markdown, and JSON actions.
+Finder does not preserve `NSMenuItem.representedObject` when it bridges extension
+menu items into its own context menu, so actions use standard menu tags with a
+title fallback instead.
+
+The standard sandbox entitlement allows the menu action to run but blocks writes
+to arbitrary Finder locations. The local ad hoc signing flow therefore uses a
+separate entitlement file with a temporary `/` read/write exception. This proves
+the Finder workflow locally without silently broadening the release entitlement.
+
+## Remaining assumptions
 
 The following must not be treated as completed until tested with a signed app:
 
 1. Monitoring `/` exposes the menu consistently across ordinary local folders,
    Desktop, and mounted external volumes.
-2. The extension's sandbox receives sufficient write access for the Finder
-   target. Apple's user-selected read/write entitlement specifically describes
-   Open and Save dialogs, so it is not assumed to grant arbitrary Finder access.
+2. A release-safe filesystem-access design can cover the intended Finder scope
+   without the local temporary exception.
 3. Finder places the menu at an acceptable depth on every supported macOS
    version.
 4. `activateFileViewerSelecting` reliably selects the new file without opening

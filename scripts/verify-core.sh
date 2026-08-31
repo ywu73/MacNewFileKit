@@ -26,4 +26,5 @@ swiftc \
 
 plutil -lint \
     Config/RightClick.entitlements \
-    Config/RightClickFinder.entitlements
+    Config/RightClickFinder.entitlements \
+    Config/RightClickFinder.local.entitlements

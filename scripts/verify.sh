@@ -24,3 +24,6 @@ xcodebuild \
     -derivedDataPath .build/xcode \
     CODE_SIGNING_ALLOWED=NO \
     build
+
+scripts/sign-local.sh \
+    .build/xcode/Build/Products/Debug/RightClick.app
