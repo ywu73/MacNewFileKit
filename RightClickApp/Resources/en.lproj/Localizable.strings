@@ -1,0 +1,17 @@
+"Finder Extension" = "Finder Extension";
+"Status" = "Status";
+"Enabled" = "Enabled";
+"Disabled" = "Disabled";
+"Manage Finder Extensions" = "Manage Finder Extensions";
+"Refresh Status" = "Refresh Status";
+"New File" = "New File";
+"Default base name" = "Default base name";
+"Text Document" = "Text Document";
+"Markdown" = "Markdown";
+"JSON" = "JSON";
+"Custom Types" = "Custom Types";
+"Name" = "Name";
+"Extension" = "Extension";
+"Add" = "Add";
+"Configuration Error" = "Configuration Error";
+"The custom type name cannot be empty." = "The custom type name cannot be empty.";

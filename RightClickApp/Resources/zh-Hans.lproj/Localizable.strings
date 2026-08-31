@@ -1,0 +1,17 @@
+"Finder Extension" = "Finder 扩展";
+"Status" = "状态";
+"Enabled" = "已启用";
+"Disabled" = "未启用";
+"Manage Finder Extensions" = "管理 Finder 扩展";
+"Refresh Status" = "刷新状态";
+"New File" = "新建文件";
+"Default base name" = "默认文件名";
+"Text Document" = "文本文档";
+"Markdown" = "Markdown";
+"JSON" = "JSON";
+"Custom Types" = "自定义类型";
+"Name" = "名称";
+"Extension" = "扩展名";
+"Add" = "添加";
+"Configuration Error" = "配置错误";
+"The custom type name cannot be empty." = "自定义类型名称不能为空。";

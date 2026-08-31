@@ -1,0 +1,64 @@
+name: RightClick
+
+options:
+  bundleIdPrefix: com.example
+  deploymentTarget:
+    macOS: "13.0"
+
+packages:
+  RightClickCore:
+    path: .
+
+targets:
+  RightClick:
+    type: application
+    platform: macOS
+    sources:
+      - RightClickApp
+    dependencies:
+      - target: RightClickFinder
+        embed: true
+      - package: RightClickCore
+        product: FileCreationCore
+      - package: RightClickCore
+        product: RightClickShared
+      - sdk: FinderSync.framework
+    settings:
+      base:
+        PRODUCT_BUNDLE_IDENTIFIER: com.example.RightClick
+        CODE_SIGN_ENTITLEMENTS: Config/RightClick.entitlements
+        SWIFT_VERSION: "6.0"
+    info:
+      path: Config/RightClick-Info.plist
+      properties:
+        CFBundleDisplayName: RightClick
+        LSApplicationCategoryType: public.app-category.utilities
+        RightClickAppGroupIdentifier: group.com.example.RightClick
+
+  RightClickFinder:
+    type: app-extension
+    platform: macOS
+    sources:
+      - RightClickFinder
+    dependencies:
+      - package: RightClickCore
+        product: FileCreationCore
+      - package: RightClickCore
+        product: RightClickShared
+      - sdk: AppKit.framework
+      - sdk: FinderSync.framework
+    settings:
+      base:
+        PRODUCT_BUNDLE_IDENTIFIER: com.example.RightClick.FinderSync
+        CODE_SIGN_ENTITLEMENTS: Config/RightClickFinder.entitlements
+        SWIFT_VERSION: "6.0"
+        SKIP_INSTALL: YES
+    info:
+      path: Config/RightClickFinder-Info.plist
+      properties:
+        CFBundleDisplayName: RightClick Finder Extension
+        RightClickAppGroupIdentifier: group.com.example.RightClick
+        NSExtension:
+          NSExtensionAttributes: {}
+          NSExtensionPointIdentifier: com.apple.FinderSync
+          NSExtensionPrincipalClass: $(PRODUCT_MODULE_NAME).FinderSync
