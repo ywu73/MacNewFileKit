@@ -2,7 +2,7 @@
 
 ## Objective
 
-Prove that a signed RightClick Finder Sync extension can expose a **New File**
+Prove that a signed MacNewFileKit Finder Sync extension can expose a **New File**
 menu and create a collision-safe file in the directory represented by the
 Finder context menu.
 
@@ -24,7 +24,7 @@ management interface through `FIFinderSyncController`.
 
 Apple documents Finder Sync primarily for file synchronization products and
 explicitly says it is not intended as a general-purpose Finder customization
-mechanism. RightClick's use is technically aligned with the contextual-menu API
+mechanism. MacNewFileKit's use is technically aligned with the contextual-menu API
 but outside Apple's recommended product archetype. This is a release and App
 Review risk, not evidence that the API cannot work.
 

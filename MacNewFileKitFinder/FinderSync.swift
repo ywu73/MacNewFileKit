@@ -1,7 +1,7 @@
 import AppKit
 import FileCreationCore
 import FinderSync
-import RightClickShared
+import MacNewFileKitShared
 
 @objc(FinderSync)
 final class FinderSync: FIFinderSync {
@@ -14,8 +14,8 @@ final class FinderSync: FIFinderSync {
 
     override init() {
         let suiteName = Bundle.main.object(
-            forInfoDictionaryKey: "RightClickAppGroupIdentifier"
-        ) as? String ?? "group.com.example.RightClick"
+            forInfoDictionaryKey: "MacNewFileKitAppGroupIdentifier"
+        ) as? String ?? "group.io.github.ywu73.MacNewFileKit"
         repository = PreferenceRepository(suiteName: suiteName)
 
         super.init()
@@ -35,7 +35,7 @@ final class FinderSync: FIFinderSync {
         }
 
         let preferences = repository?.load() ?? .default
-        let menu = NSMenu(title: "RightClick")
+        let menu = NSMenu(title: "MacNewFileKit")
         let newFileTitle = localized("New File")
         let newFileItem = NSMenuItem(title: newFileTitle, action: nil, keyEquivalent: "")
         let submenu = NSMenu(title: newFileTitle)
@@ -120,7 +120,7 @@ final class FinderSync: FIFinderSync {
 
     private func customTemplate(
         for item: NSMenuItem,
-        in preferences: RightClickPreferences
+        in preferences: MacNewFileKitPreferences
     ) -> CustomFileTemplate? {
         let index = item.tag - Self.customTemplateTagBase
         if preferences.customTemplates.indices.contains(index) {
@@ -137,7 +137,7 @@ final class FinderSync: FIFinderSync {
             let created = try creator.create(request)
             NSWorkspace.shared.activateFileViewerSelecting([created.url])
         } catch {
-            NSLog("RightClick could not create file: %@", error.localizedDescription)
+            NSLog("MacNewFileKit could not create file: %@", error.localizedDescription)
             showCreationError(error)
         }
     }

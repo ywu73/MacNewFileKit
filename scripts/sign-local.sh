@@ -4,10 +4,10 @@ set -eu
 
 SCRIPT_DIR=$(CDPATH= cd -- "$(dirname -- "$0")" && pwd)
 PROJECT_ROOT=$(dirname "$SCRIPT_DIR")
-APP_PATH=${1:-"$PROJECT_ROOT/.build/xcode/Build/Products/Debug/RightClick.app"}
-EXTENSION_PATH="$APP_PATH/Contents/PlugIns/RightClickFinder.appex"
-APP_ENTITLEMENTS="$PROJECT_ROOT/Config/RightClick.entitlements"
-EXTENSION_ENTITLEMENTS="$PROJECT_ROOT/Config/RightClickFinder.local.entitlements"
+APP_PATH=${1:-"$PROJECT_ROOT/.build/xcode/Build/Products/Debug/MacNewFileKit.app"}
+EXTENSION_PATH="$APP_PATH/Contents/PlugIns/MacNewFileKitFinder.appex"
+APP_ENTITLEMENTS="$PROJECT_ROOT/Config/MacNewFileKit.entitlements"
+EXTENSION_ENTITLEMENTS="$PROJECT_ROOT/Config/MacNewFileKitFinder.local.entitlements"
 
 if [ ! -d "$APP_PATH" ]; then
     echo "Local signing failed: app bundle not found at $APP_PATH" >&2
@@ -26,7 +26,7 @@ echo "Signing Finder extension ad hoc..."
     --timestamp=none \
     --generate-entitlement-der \
     --entitlements "$EXTENSION_ENTITLEMENTS" \
-    --identifier com.example.RightClick.FinderSync \
+    --identifier io.github.ywu73.MacNewFileKit.FinderSync \
     "$EXTENSION_PATH"
 
 echo "Signing containing app ad hoc..."
@@ -36,7 +36,7 @@ echo "Signing containing app ad hoc..."
     --timestamp=none \
     --generate-entitlement-der \
     --entitlements "$APP_ENTITLEMENTS" \
-    --identifier com.example.RightClick \
+    --identifier io.github.ywu73.MacNewFileKit \
     "$APP_PATH"
 
 echo "Verifying nested extension signature..."

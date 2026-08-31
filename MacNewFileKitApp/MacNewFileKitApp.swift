@@ -1,7 +1,7 @@
 import SwiftUI
 
 @main
-struct RightClickApp: App {
+struct MacNewFileKitApp: App {
     @StateObject private var model = SettingsModel()
 
     var body: some Scene {

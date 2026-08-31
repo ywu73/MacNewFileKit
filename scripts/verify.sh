@@ -17,8 +17,8 @@ fi
 
 xcodegen generate
 xcodebuild \
-    -project RightClick.xcodeproj \
-    -scheme RightClick \
+    -project MacNewFileKit.xcodeproj \
+    -scheme MacNewFileKit \
     -configuration Debug \
     -destination 'platform=macOS,arch=arm64' \
     -derivedDataPath .build/xcode \
@@ -26,4 +26,4 @@ xcodebuild \
     build
 
 scripts/sign-local.sh \
-    .build/xcode/Build/Products/Debug/RightClick.app
+    .build/xcode/Build/Products/Debug/MacNewFileKit.app

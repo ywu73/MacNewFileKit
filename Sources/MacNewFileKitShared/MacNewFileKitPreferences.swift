@@ -20,7 +20,7 @@ public struct CustomFileTemplate: Codable, Equatable, Identifiable, Sendable {
     }
 }
 
-public struct RightClickPreferences: Codable, Equatable, Sendable {
+public struct MacNewFileKitPreferences: Codable, Equatable, Sendable {
     public var defaultBaseName: String
     public var enabledTemplates: Set<FileTemplate>
     public var customTemplates: [CustomFileTemplate]
@@ -35,11 +35,12 @@ public struct RightClickPreferences: Codable, Equatable, Sendable {
         self.customTemplates = customTemplates
     }
 
-    public static let `default` = RightClickPreferences()
+    public static let `default` = MacNewFileKitPreferences()
 }
 
 public final class PreferenceRepository: @unchecked Sendable {
-    private static let storageKey = "rightClick.preferences.v1"
+    private static let storageKey = "macNewFileKit.preferences.v1"
+    private static let legacyStorageKey = "rightClick.preferences.v1"
 
     private let defaults: UserDefaults
     private let encoder = JSONEncoder()
@@ -56,16 +57,17 @@ public final class PreferenceRepository: @unchecked Sendable {
         self.defaults = defaults
     }
 
-    public func load() -> RightClickPreferences {
-        guard let data = defaults.data(forKey: Self.storageKey),
-              let preferences = try? decoder.decode(RightClickPreferences.self, from: data)
+    public func load() -> MacNewFileKitPreferences {
+        guard let data = defaults.data(forKey: Self.storageKey)
+                ?? defaults.data(forKey: Self.legacyStorageKey),
+              let preferences = try? decoder.decode(MacNewFileKitPreferences.self, from: data)
         else {
             return .default
         }
         return preferences
     }
 
-    public func save(_ preferences: RightClickPreferences) throws {
+    public func save(_ preferences: MacNewFileKitPreferences) throws {
         defaults.set(try encoder.encode(preferences), forKey: Self.storageKey)
     }
 }

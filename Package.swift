@@ -3,7 +3,7 @@
 import PackageDescription
 
 let package = Package(
-    name: "RightClick",
+    name: "MacNewFileKit",
     platforms: [
         .macOS(.v13),
     ],
@@ -13,8 +13,8 @@ let package = Package(
             targets: ["FileCreationCore"]
         ),
         .library(
-            name: "RightClickShared",
-            targets: ["RightClickShared"]
+            name: "MacNewFileKitShared",
+            targets: ["MacNewFileKitShared"]
         ),
     ],
     targets: [
@@ -22,7 +22,7 @@ let package = Package(
             name: "FileCreationCore"
         ),
         .target(
-            name: "RightClickShared",
+            name: "MacNewFileKitShared",
             dependencies: ["FileCreationCore"]
         ),
         .testTarget(
@@ -30,8 +30,8 @@ let package = Package(
             dependencies: ["FileCreationCore"]
         ),
         .testTarget(
-            name: "RightClickSharedTests",
-            dependencies: ["RightClickShared"]
+            name: "MacNewFileKitSharedTests",
+            dependencies: ["MacNewFileKitShared"]
         ),
     ]
 )

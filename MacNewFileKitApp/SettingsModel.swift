@@ -2,11 +2,11 @@ import Combine
 import FileCreationCore
 import FinderSync
 import Foundation
-import RightClickShared
+import MacNewFileKitShared
 
 @MainActor
 final class SettingsModel: ObservableObject {
-    @Published var preferences: RightClickPreferences
+    @Published var preferences: MacNewFileKitPreferences
     @Published private(set) var extensionEnabled = false
     @Published private(set) var persistenceError: String?
 
@@ -14,8 +14,8 @@ final class SettingsModel: ObservableObject {
 
     init() {
         let suiteName = Bundle.main.object(
-            forInfoDictionaryKey: "RightClickAppGroupIdentifier"
-        ) as? String ?? "group.com.example.RightClick"
+            forInfoDictionaryKey: "MacNewFileKitAppGroupIdentifier"
+        ) as? String ?? "group.io.github.ywu73.MacNewFileKit"
         let repository = PreferenceRepository(suiteName: suiteName)
         self.repository = repository
         self.preferences = repository?.load() ?? .default

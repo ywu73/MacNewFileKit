@@ -1,6 +1,6 @@
-# RightClick
+# MacNewFileKit
 
-RightClick is a native macOS Finder extension that adds a Windows-style
+MacNewFileKit is a native macOS Finder extension that adds a Windows-style
 **New File** menu. The first release focuses on creating text, Markdown, JSON,
 and user-defined text templates without overwriting existing files.
 
@@ -12,18 +12,18 @@ and user-defined text templates without overwriting existing files.
 - Shared settings through an App Group
 - Finder selection after creation
 
-RightClick does not use Accessibility permission or keyboard simulation. The
+MacNewFileKit does not use Accessibility permission or keyboard simulation. The
 public Finder API can select a newly created file, but it does not expose an API
 for entering inline rename mode.
 
 ## Architecture
 
 ```text
-RightClick.app
-├── RightClickApp          settings and extension onboarding
-├── RightClickFinder       Finder Sync extension
+MacNewFileKit.app
+├── MacNewFileKitApp       settings and extension onboarding
+├── MacNewFileKitFinder    Finder Sync extension
 ├── FileCreationCore       exclusive creation and filename allocation
-└── RightClickShared       App Group preference model
+└── MacNewFileKitShared    App Group preference model
 ```
 
 `FileCreationCore` uses `open(2)` with `O_CREAT | O_EXCL`. Name selection and
@@ -34,12 +34,12 @@ creation therefore form one exclusive operation instead of a vulnerable
 
 - macOS 13 or later
 - Full Xcode installation
-- XcodeGen to generate `RightClick.xcodeproj` from `project.yml`
+- XcodeGen to generate `MacNewFileKit.xcodeproj` from `project.yml`
 - No Apple Developer account is required for local ad hoc builds
 
-The checked-in identifiers use `com.example.RightClick` and
-`group.com.example.RightClick` placeholders. Replace both bundle identifiers
-and the App Group value before creating a distributable build.
+The checked-in identifiers use `io.github.ywu73.MacNewFileKit` and
+`group.io.github.ywu73.MacNewFileKit`. Register the identifiers with an Apple
+Developer team before creating a distributable build.
 
 ## Development
 
@@ -59,16 +59,16 @@ The verification script builds with Xcode-managed signing disabled, then signs
 the embedded Finder extension before the containing app with a local ad hoc
 identity (`codesign --sign -`). It preserves the sandbox and App Group
 entitlements and finishes with strict signature verification. The signed app is
-written to `.build/xcode/Build/Products/Debug/RightClick.app`.
+written to `.build/xcode/Build/Products/Debug/MacNewFileKit.app`.
 
 The ad hoc Finder extension uses
-`Config/RightClickFinder.local.entitlements`, which adds a temporary `/`
+`Config/MacNewFileKitFinder.local.entitlements`, which adds a temporary `/`
 read/write sandbox exception so the global Finder workflow can be exercised on
-the developer's Mac. The normal `Config/RightClickFinder.entitlements` does not
+the developer's Mac. The normal `Config/MacNewFileKitFinder.entitlements` does not
 contain that exception.
 
 To run the Finder integration, launch that app and use **Manage Finder
-Extensions** inside RightClick. The extension currently monitors `/`; this
+Extensions** inside MacNewFileKit. The extension currently monitors `/`; this
 deliberate MVP choice must be validated across local folders, Desktop, and
 external volumes before it is treated as supported behavior.
 

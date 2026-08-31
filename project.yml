@@ -1,63 +1,63 @@
-name: RightClick
+name: MacNewFileKit
 
 options:
-  bundleIdPrefix: com.example
+  bundleIdPrefix: io.github.ywu73
   deploymentTarget:
     macOS: "13.0"
 
 packages:
-  RightClickCore:
+  MacNewFileKitCore:
     path: .
 
 targets:
-  RightClick:
+  MacNewFileKit:
     type: application
     platform: macOS
     sources:
-      - RightClickApp
+      - MacNewFileKitApp
     dependencies:
-      - target: RightClickFinder
+      - target: MacNewFileKitFinder
         embed: true
-      - package: RightClickCore
+      - package: MacNewFileKitCore
         product: FileCreationCore
-      - package: RightClickCore
-        product: RightClickShared
+      - package: MacNewFileKitCore
+        product: MacNewFileKitShared
       - sdk: FinderSync.framework
     settings:
       base:
-        PRODUCT_BUNDLE_IDENTIFIER: com.example.RightClick
-        CODE_SIGN_ENTITLEMENTS: Config/RightClick.entitlements
+        PRODUCT_BUNDLE_IDENTIFIER: io.github.ywu73.MacNewFileKit
+        CODE_SIGN_ENTITLEMENTS: Config/MacNewFileKit.entitlements
         SWIFT_VERSION: "6.0"
     info:
-      path: Config/RightClick-Info.plist
+      path: Config/MacNewFileKit-Info.plist
       properties:
-        CFBundleDisplayName: RightClick
+        CFBundleDisplayName: MacNewFileKit
         LSApplicationCategoryType: public.app-category.utilities
-        RightClickAppGroupIdentifier: group.com.example.RightClick
+        MacNewFileKitAppGroupIdentifier: group.io.github.ywu73.MacNewFileKit
 
-  RightClickFinder:
+  MacNewFileKitFinder:
     type: app-extension
     platform: macOS
     sources:
-      - RightClickFinder
+      - MacNewFileKitFinder
     dependencies:
-      - package: RightClickCore
+      - package: MacNewFileKitCore
         product: FileCreationCore
-      - package: RightClickCore
-        product: RightClickShared
+      - package: MacNewFileKitCore
+        product: MacNewFileKitShared
       - sdk: AppKit.framework
       - sdk: FinderSync.framework
     settings:
       base:
-        PRODUCT_BUNDLE_IDENTIFIER: com.example.RightClick.FinderSync
-        CODE_SIGN_ENTITLEMENTS: Config/RightClickFinder.entitlements
+        PRODUCT_BUNDLE_IDENTIFIER: io.github.ywu73.MacNewFileKit.FinderSync
+        CODE_SIGN_ENTITLEMENTS: Config/MacNewFileKitFinder.entitlements
         SWIFT_VERSION: "6.0"
         SKIP_INSTALL: YES
     info:
-      path: Config/RightClickFinder-Info.plist
+      path: Config/MacNewFileKitFinder-Info.plist
       properties:
-        CFBundleDisplayName: RightClick Finder Extension
-        RightClickAppGroupIdentifier: group.com.example.RightClick
+        CFBundleDisplayName: MacNewFileKit Finder Extension
+        MacNewFileKitAppGroupIdentifier: group.io.github.ywu73.MacNewFileKit
         NSExtension:
           NSExtensionAttributes: {}
           NSExtensionPointIdentifier: com.apple.FinderSync

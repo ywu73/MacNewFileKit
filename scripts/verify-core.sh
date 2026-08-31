@@ -8,23 +8,23 @@ modules_path="$(swift build --show-bin-path)/Modules"
 
 swiftc \
     -typecheck \
-    -module-name RightClickApplication \
+    -module-name MacNewFileKitApplication \
     -I "$modules_path" \
     -framework AppKit \
     -framework FinderSync \
-    RightClickApp/RightClickApp.swift \
-    RightClickApp/SettingsModel.swift \
-    RightClickApp/ContentView.swift
+    MacNewFileKitApp/MacNewFileKitApp.swift \
+    MacNewFileKitApp/SettingsModel.swift \
+    MacNewFileKitApp/ContentView.swift
 
 swiftc \
     -typecheck \
-    -module-name RightClickFinderExtension \
+    -module-name MacNewFileKitFinderExtension \
     -I "$modules_path" \
     -framework AppKit \
     -framework FinderSync \
-    RightClickFinder/FinderSync.swift
+    MacNewFileKitFinder/FinderSync.swift
 
 plutil -lint \
-    Config/RightClick.entitlements \
-    Config/RightClickFinder.entitlements \
-    Config/RightClickFinder.local.entitlements
+    Config/MacNewFileKit.entitlements \
+    Config/MacNewFileKitFinder.entitlements \
+    Config/MacNewFileKitFinder.local.entitlements
