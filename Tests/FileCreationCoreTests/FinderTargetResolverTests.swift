@@ -39,6 +39,17 @@ struct FinderTargetResolverTests {
         #expect(result == directoryURL)
     }
 
+    @Test("rejects selected items from different containing folders")
+    func multipleSelectionAcrossFolders() {
+        let otherFileURL = URL(fileURLWithPath: "/tmp/other/item.txt")
+        let result = resolver.resolve(
+            selectedURLs: [fileURL, otherFileURL],
+            targetedURL: directoryURL,
+            isDirectory: { _ in false }
+        )
+        #expect(result == nil)
+    }
+
     @Test("uses a targeted container for a background menu")
     func targetedContainer() {
         let result = resolver.resolve(

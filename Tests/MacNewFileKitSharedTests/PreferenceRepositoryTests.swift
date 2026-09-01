@@ -50,6 +50,22 @@ struct PreferenceRepositoryTests {
         let repository = PreferenceRepository(defaults: defaults)
         #expect(repository.load() == preferences)
     }
+
+    @Test("shares preferences through an atomic JSON file")
+    func sharesPreferencesThroughFile() throws {
+        try withTemporaryDirectory { directoryURL in
+            let storageURL = directoryURL.appendingPathComponent("preferences.json")
+            let writer = PreferenceRepository(storageURL: storageURL)
+            let reader = PreferenceRepository(storageURL: storageURL)
+            let preferences = MacNewFileKitPreferences(
+                defaultBaseName: "draft",
+                enabledTemplates: [.markdown]
+            )
+
+            try writer.save(preferences)
+            #expect(reader.load() == preferences)
+        }
+    }
 }
 
 private func withIsolatedRepository<T>(
@@ -59,4 +75,15 @@ private func withIsolatedRepository<T>(
     let defaults = UserDefaults(suiteName: suiteName)!
     defer { defaults.removePersistentDomain(forName: suiteName) }
     return try body(PreferenceRepository(defaults: defaults))
+}
+
+private func withTemporaryDirectory<T>(_ body: (URL) throws -> T) throws -> T {
+    let directoryURL = FileManager.default.temporaryDirectory
+        .appendingPathComponent(UUID().uuidString, isDirectory: true)
+    try FileManager.default.createDirectory(
+        at: directoryURL,
+        withIntermediateDirectories: true
+    )
+    defer { try? FileManager.default.removeItem(at: directoryURL) }
+    return try body(directoryURL)
 }

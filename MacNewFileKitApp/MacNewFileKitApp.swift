@@ -7,12 +7,12 @@ struct MacNewFileKitApp: App {
     var body: some Scene {
         WindowGroup {
             ContentView(model: model)
-                .frame(minWidth: 560, minHeight: 520)
+                .frame(minWidth: 700, minHeight: 680)
         }
 
         Settings {
             ContentView(model: model)
-                .frame(width: 560, height: 520)
+                .frame(width: 700, height: 680)
         }
     }
 }

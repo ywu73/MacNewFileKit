@@ -3,3 +3,10 @@
 "Markdown" = "Markdown";
 "JSON" = "JSON";
 "Could Not Create File" = "Could Not Create File";
+"The target is not a writable directory: %@" = "The target is not a writable directory: %@";
+"The base name is invalid: %@" = "The base name is invalid: %@";
+"The file extension is invalid: %@" = "The file extension is invalid: %@";
+"Permission was denied while creating a file in: %@" = "Permission was denied while creating a file in: %@";
+"The target file system is read-only: %@" = "The target file system is read-only: %@";
+"No available file name could be found in: %@" = "No available file name could be found in: %@";
+"The system could not create %@ (errno %d)." = "The system could not create %@ (errno %d).";

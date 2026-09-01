@@ -15,7 +15,13 @@ public struct FinderTargetResolver: Sendable {
         }
 
         if let firstSelectedURL = selectedURLs.first {
-            return firstSelectedURL.deletingLastPathComponent()
+            let sharedParent = firstSelectedURL.deletingLastPathComponent().standardizedFileURL
+            guard selectedURLs.dropFirst().allSatisfy({
+                $0.deletingLastPathComponent().standardizedFileURL == sharedParent
+            }) else {
+                return nil
+            }
+            return sharedParent
         }
 
         guard let targetedURL else { return nil }

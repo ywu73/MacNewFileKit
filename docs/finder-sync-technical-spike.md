@@ -41,14 +41,29 @@ to arbitrary Finder locations. The local ad hoc signing flow therefore uses a
 separate entitlement file with a temporary `/` read/write exception. This proves
 the Finder workflow locally without silently broadening the release entitlement.
 
+## Authorized-folder prototype
+
+The containing app can now create app-scoped security bookmarks for directories
+the user selects with `NSOpenPanel` and store them in the App Group. The Finder
+extension resolves those bookmarks, keeps their security scopes active, and only
+offers creation when the resolved target is inside an authorized root. Path
+matching uses normalized path components rather than string prefixes.
+
+`scripts/verify.sh` accepts the `authorized-folders` signing profile through
+`MACNEWFILEKIT_SIGNING_PROFILE`. That profile omits the temporary `/` write
+exception so the bookmark path can be tested without a broader entitlement
+masking failures. Successful build and signature verification alone do not prove
+that bookmark access survives Finder extension restart; that remains a live-test
+exit criterion.
+
 ## Remaining assumptions
 
 The following must not be treated as completed until tested with a signed app:
 
 1. Monitoring `/` exposes the menu consistently across ordinary local folders,
    Desktop, and mounted external volumes.
-2. A release-safe filesystem-access design can cover the intended Finder scope
-   without the local temporary exception.
+2. Security-scoped directory bookmarks remain usable after Finder and extension
+   restarts when signed without the local temporary exception.
 3. Finder places the menu at an acceptable depth on every supported macOS
    version.
 4. `activateFileViewerSelecting` reliably selects the new file without opening
