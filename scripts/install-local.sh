@@ -9,6 +9,7 @@ INSTALL_APP=${2:-"/Applications/MacNewFileKit.app"}
 EXTENSION_ID="io.github.ywu73.MacNewFileKit.FinderSync"
 LEGACY_EXTENSION_ID="com.example.RightClick.FinderSync"
 SOURCE_EXTENSION="$SOURCE_APP/Contents/PlugIns/MacNewFileKitFinder.appex"
+LSREGISTER="/System/Library/Frameworks/CoreServices.framework/Frameworks/LaunchServices.framework/Support/lsregister"
 
 if [ ! -d "$SOURCE_APP" ]; then
     echo "Local install failed: app bundle not found at $SOURCE_APP" >&2
@@ -26,6 +27,12 @@ echo "Verifying source signature..."
 
 echo "Installing MacNewFileKit..."
 /usr/bin/ditto "$SOURCE_APP" "$INSTALL_APP"
+
+echo "Refreshing the application icon registration..."
+/usr/bin/touch "$INSTALL_APP"
+if [ -x "$LSREGISTER" ]; then
+    "$LSREGISTER" -f "$INSTALL_APP"
+fi
 
 echo "Verifying installed signature..."
 /usr/bin/codesign --verify --deep --strict --verbose=2 "$INSTALL_APP"
