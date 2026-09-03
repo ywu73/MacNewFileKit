@@ -2,10 +2,14 @@
 "Text Document" = "Text Document";
 "Markdown" = "Markdown";
 "JSON" = "JSON";
+"Word Document" = "Word Document";
+"Excel Workbook" = "Excel Workbook";
+"PowerPoint Presentation" = "PowerPoint Presentation";
 "Could Not Create File" = "Could Not Create File";
 "The target is not a writable directory: %@" = "The target is not a writable directory: %@";
 "The base name is invalid: %@" = "The base name is invalid: %@";
 "The file extension is invalid: %@" = "The file extension is invalid: %@";
+"The built-in template is unavailable: %@" = "The built-in template is unavailable: %@";
 "Permission was denied while creating a file in: %@" = "Permission was denied while creating a file in: %@";
 "The target file system is read-only: %@" = "The target file system is read-only: %@";
 "No available file name could be found in: %@" = "No available file name could be found in: %@";

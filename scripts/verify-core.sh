@@ -4,6 +4,14 @@ set -eu
 
 swift test
 
+for template in \
+    Sources/FileCreationCore/Resources/blank.docx \
+    Sources/FileCreationCore/Resources/blank.xlsx \
+    Sources/FileCreationCore/Resources/blank.pptx
+do
+    unzip -tq "$template" >/dev/null
+done
+
 modules_path="$(swift build --show-bin-path)/Modules"
 
 swiftc \

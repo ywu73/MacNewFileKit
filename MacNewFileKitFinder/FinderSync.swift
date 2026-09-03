@@ -98,14 +98,18 @@ final class FinderSync: FIFinderSync {
         }
 
         let preferences = repository?.load() ?? .default
-        performCreation(
-            FileCreationRequest(
-                directoryURL: directoryURL,
-                baseName: preferences.defaultBaseName,
-                fileExtension: template.fileExtension,
-                contents: template.initialContents
+        do {
+            performCreation(
+                try creator.request(
+                    for: template,
+                    in: directoryURL,
+                    baseName: preferences.defaultBaseName
+                )
             )
-        )
+        } catch {
+            NSLog("MacNewFileKit could not load a built-in template: %@", error.localizedDescription)
+            showCreationError(error)
+        }
     }
 
     @objc
@@ -224,6 +228,9 @@ final class FinderSync: FIFinderSync {
         case let .invalidFileExtension(fileExtension):
             key = "The file extension is invalid: %@"
             argument = fileExtension
+        case let .missingTemplateResource(filename):
+            key = "The built-in template is unavailable: %@"
+            argument = filename
         case let .permissionDenied(url):
             key = "Permission was denied while creating a file in: %@"
             argument = url.path

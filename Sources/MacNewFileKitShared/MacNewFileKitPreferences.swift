@@ -21,6 +21,9 @@ public struct CustomFileTemplate: Codable, Equatable, Identifiable, Sendable {
 }
 
 public struct MacNewFileKitPreferences: Codable, Equatable, Sendable {
+    static let currentSchemaVersion = 2
+
+    public private(set) var schemaVersion: Int
     public var defaultBaseName: String
     public var enabledTemplates: Set<FileTemplate>
     public var customTemplates: [CustomFileTemplate]
@@ -30,12 +33,47 @@ public struct MacNewFileKitPreferences: Codable, Equatable, Sendable {
         enabledTemplates: Set<FileTemplate> = Set(FileTemplate.allCases),
         customTemplates: [CustomFileTemplate] = []
     ) {
+        self.schemaVersion = Self.currentSchemaVersion
         self.defaultBaseName = defaultBaseName
         self.enabledTemplates = enabledTemplates
         self.customTemplates = customTemplates
     }
 
     public static let `default` = MacNewFileKitPreferences()
+
+    private enum CodingKeys: String, CodingKey {
+        case schemaVersion
+        case defaultBaseName
+        case enabledTemplates
+        case customTemplates
+    }
+
+    public init(from decoder: Decoder) throws {
+        let container = try decoder.container(keyedBy: CodingKeys.self)
+        schemaVersion = try container.decodeIfPresent(Int.self, forKey: .schemaVersion) ?? 1
+        defaultBaseName = try container.decode(String.self, forKey: .defaultBaseName)
+        enabledTemplates = try container.decode(Set<FileTemplate>.self, forKey: .enabledTemplates)
+        customTemplates = try container.decodeIfPresent(
+            [CustomFileTemplate].self,
+            forKey: .customTemplates
+        ) ?? []
+    }
+
+    public func encode(to encoder: Encoder) throws {
+        var container = encoder.container(keyedBy: CodingKeys.self)
+        try container.encode(schemaVersion, forKey: .schemaVersion)
+        try container.encode(defaultBaseName, forKey: .defaultBaseName)
+        try container.encode(enabledTemplates, forKey: .enabledTemplates)
+        try container.encode(customTemplates, forKey: .customTemplates)
+    }
+
+    mutating func migrateIfNeeded() -> Bool {
+        guard schemaVersion < Self.currentSchemaVersion else { return false }
+
+        enabledTemplates.formUnion([.word, .excel, .powerPoint])
+        schemaVersion = Self.currentSchemaVersion
+        return true
+    }
 }
 
 public final class PreferenceRepository: @unchecked Sendable {
@@ -74,9 +112,13 @@ public final class PreferenceRepository: @unchecked Sendable {
 
     public func load() -> MacNewFileKitPreferences {
         guard let data = loadData(),
-              let preferences = try? decoder.decode(MacNewFileKitPreferences.self, from: data)
+              var preferences = try? decoder.decode(MacNewFileKitPreferences.self, from: data)
         else {
             return .default
+        }
+
+        if preferences.migrateIfNeeded() {
+            try? save(preferences)
         }
         return preferences
     }

@@ -19,7 +19,10 @@ let package = Package(
     ],
     targets: [
         .target(
-            name: "FileCreationCore"
+            name: "FileCreationCore",
+            resources: [
+                .process("Resources"),
+            ]
         ),
         .target(
             name: "MacNewFileKitShared",

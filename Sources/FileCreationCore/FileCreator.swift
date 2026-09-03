@@ -44,12 +44,12 @@ public struct FileCreator: Sendable {
         for template: FileTemplate,
         in directoryURL: URL,
         baseName: String = "untitled"
-    ) -> FileCreationRequest {
+    ) throws -> FileCreationRequest {
         FileCreationRequest(
             directoryURL: directoryURL,
             baseName: baseName,
             fileExtension: template.fileExtension,
-            contents: template.initialContents
+            contents: try template.initialContents
         )
     }
 

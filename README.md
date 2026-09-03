@@ -1,14 +1,15 @@
 # MacNewFileKit
 
 MacNewFileKit is a native macOS Finder extension that adds a Windows-style
-**New File** menu. The first release focuses on creating text, Markdown, JSON,
+**New File** menu. It creates text, Markdown, JSON, Word, Excel, PowerPoint,
 and user-defined text templates without overwriting existing files.
 
 ## Current scope
 
 - Finder background, selected folder, and Desktop context menus
 - Collision-safe names such as `untitled.txt` and `untitled 2.txt`
-- Text, Markdown, JSON, and custom text templates
+- Text, Markdown, JSON, Word (`.docx`), Excel (`.xlsx`), PowerPoint (`.pptx`),
+  and custom text templates
 - Editable custom-template names, extensions, initial content, and ordering
 - Shared settings through an App Group
 - User-authorized folders backed by security-scoped bookmarks

@@ -9,6 +9,9 @@
 "Text Document" = "Text Document";
 "Markdown" = "Markdown";
 "JSON" = "JSON";
+"Word Document" = "Word Document";
+"Excel Workbook" = "Excel Workbook";
+"PowerPoint Presentation" = "PowerPoint Presentation";
 "Custom Types" = "Custom Types";
 "Name" = "Name";
 "Extension" = "Extension";

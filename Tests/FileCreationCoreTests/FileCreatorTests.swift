@@ -9,7 +9,7 @@ struct FileCreatorTests {
         try withTemporaryDirectory { directoryURL in
             let creator = FileCreator()
             let created = try creator.create(
-                creator.request(for: .text, in: directoryURL)
+                try creator.request(for: .text, in: directoryURL)
             )
 
             #expect(created.url.lastPathComponent == "untitled.txt")
@@ -27,7 +27,7 @@ struct FileCreatorTests {
 
             let creator = FileCreator()
             let created = try creator.create(
-                creator.request(for: .text, in: directoryURL)
+                try creator.request(for: .text, in: directoryURL)
             )
 
             #expect(created.url.lastPathComponent == "untitled 2.txt")
@@ -41,11 +41,33 @@ struct FileCreatorTests {
         try withTemporaryDirectory { directoryURL in
             let creator = FileCreator()
             let created = try creator.create(
-                creator.request(for: .json, in: directoryURL)
+                try creator.request(for: .json, in: directoryURL)
             )
 
             #expect(created.url.lastPathComponent == "untitled.json")
             #expect(try String(contentsOf: created.url, encoding: .utf8) == "{}\n")
+        }
+    }
+
+    @Test(
+        "creates valid-looking Office Open XML packages",
+        arguments: [
+            (FileTemplate.word, "docx"),
+            (FileTemplate.excel, "xlsx"),
+            (FileTemplate.powerPoint, "pptx"),
+        ]
+    )
+    func createsOfficeDocument(template: FileTemplate, fileExtension: String) throws {
+        try withTemporaryDirectory { directoryURL in
+            let creator = FileCreator()
+            let created = try creator.create(
+                try creator.request(for: template, in: directoryURL)
+            )
+            let contents = try Data(contentsOf: created.url)
+
+            #expect(created.url.pathExtension == fileExtension)
+            #expect(contents.count > 4)
+            #expect(Array(contents.prefix(4)) == [0x50, 0x4B, 0x03, 0x04])
         }
     }
 
@@ -126,7 +148,7 @@ struct FileCreatorTests {
     func concurrentCreationProducesUniqueFiles() async throws {
         try await withTemporaryDirectory { directoryURL in
             let creator = FileCreator()
-            let request = creator.request(for: .text, in: directoryURL)
+            let request = try creator.request(for: .text, in: directoryURL)
 
             let urls = try await withThrowingTaskGroup(of: URL.self) { group in
                 for _ in 0..<24 {

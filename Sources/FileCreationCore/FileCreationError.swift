@@ -4,6 +4,7 @@ public enum FileCreationError: Error, Equatable, Sendable {
     case invalidDirectory(URL)
     case invalidBaseName(String)
     case invalidFileExtension(String)
+    case missingTemplateResource(String)
     case permissionDenied(URL)
     case readOnlyFileSystem(URL)
     case tooManyNameCollisions(URL)
@@ -19,6 +20,8 @@ extension FileCreationError: LocalizedError {
             "The base name is invalid: \(name)"
         case let .invalidFileExtension(fileExtension):
             "The file extension is invalid: \(fileExtension)"
+        case let .missingTemplateResource(filename):
+            "The built-in template is unavailable: \(filename)"
         case let .permissionDenied(url):
             "Permission was denied while creating a file in: \(url.path)"
         case let .readOnlyFileSystem(url):

@@ -2,10 +2,14 @@
 "Text Document" = "文本文档";
 "Markdown" = "Markdown";
 "JSON" = "JSON";
+"Word Document" = "Word 文档";
+"Excel Workbook" = "Excel 工作簿";
+"PowerPoint Presentation" = "PowerPoint 演示文稿";
 "Could Not Create File" = "无法创建文件";
 "The target is not a writable directory: %@" = "目标不是可写目录：%@";
 "The base name is invalid: %@" = "默认文件名无效：%@";
 "The file extension is invalid: %@" = "文件扩展名无效：%@";
+"The built-in template is unavailable: %@" = "内置模板不可用：%@";
 "Permission was denied while creating a file in: %@" = "没有权限在此目录创建文件：%@";
 "The target file system is read-only: %@" = "目标文件系统为只读：%@";
 "No available file name could be found in: %@" = "无法在此目录找到可用文件名：%@";

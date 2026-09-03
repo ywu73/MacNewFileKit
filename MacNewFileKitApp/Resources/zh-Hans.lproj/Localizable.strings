@@ -9,6 +9,9 @@
 "Text Document" = "文本文档";
 "Markdown" = "Markdown";
 "JSON" = "JSON";
+"Word Document" = "Word 文档";
+"Excel Workbook" = "Excel 工作簿";
+"PowerPoint Presentation" = "PowerPoint 演示文稿";
 "Custom Types" = "自定义类型";
 "Name" = "名称";
 "Extension" = "扩展名";

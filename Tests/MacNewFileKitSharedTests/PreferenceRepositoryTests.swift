@@ -66,6 +66,38 @@ struct PreferenceRepositoryTests {
             #expect(reader.load() == preferences)
         }
     }
+
+    @Test("enables newly added Office templates when migrating version 1 preferences")
+    func migratesVersionOnePreferences() throws {
+        let suiteName = "MacNewFileKitMigrationTests.\(UUID().uuidString)"
+        let defaults = UserDefaults(suiteName: suiteName)!
+        defer { defaults.removePersistentDomain(forName: suiteName) }
+
+        let legacyPreferences = VersionOnePreferences(
+            defaultBaseName: "draft",
+            enabledTemplates: [.markdown],
+            customTemplates: []
+        )
+        defaults.set(
+            try JSONEncoder().encode(legacyPreferences),
+            forKey: "macNewFileKit.preferences.v1"
+        )
+
+        let repository = PreferenceRepository(defaults: defaults)
+        var migrated = repository.load()
+        #expect(migrated.schemaVersion == MacNewFileKitPreferences.currentSchemaVersion)
+        #expect(migrated.enabledTemplates == [.markdown, .word, .excel, .powerPoint])
+
+        migrated.enabledTemplates.remove(.word)
+        try repository.save(migrated)
+        #expect(!repository.load().enabledTemplates.contains(.word))
+    }
+}
+
+private struct VersionOnePreferences: Encodable {
+    let defaultBaseName: String
+    let enabledTemplates: Set<FileTemplate>
+    let customTemplates: [CustomFileTemplate]
 }
 
 private func withIsolatedRepository<T>(
