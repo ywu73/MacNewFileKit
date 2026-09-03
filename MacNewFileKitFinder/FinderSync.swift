@@ -20,7 +20,10 @@ final class FinderSync: FIFinderSync {
         ) as? String ?? "group.io.github.ywu73.MacNewFileKit"
         repository = PreferenceRepository(suiteName: suiteName)
         authorizedDirectorySession = AuthorizedDirectorySession(
-            repository: AuthorizedDirectoryRepository(suiteName: suiteName)
+            repository: AuthorizedDirectoryRepository(suiteName: suiteName),
+            allowLocalPathFallback: Bundle.main.object(
+                forInfoDictionaryKey: "MacNewFileKitLocalPathFallback"
+            ) as? Bool == true
         )
 
         super.init()
@@ -256,11 +259,16 @@ private final class AuthorizedDirectorySession {
 
     private let repository: AuthorizedDirectoryRepository?
     private let resolver = AuthorizedDirectoryResolver()
+    private let allowLocalPathFallback: Bool
     private var loadedBookmarks: [AuthorizedDirectoryBookmark] = []
     private var activeAccess: [UUID: Access] = [:]
 
-    init(repository: AuthorizedDirectoryRepository?) {
+    init(
+        repository: AuthorizedDirectoryRepository?,
+        allowLocalPathFallback: Bool = false
+    ) {
         self.repository = repository
+        self.allowLocalPathFallback = allowLocalPathFallback
     }
 
     var rootPaths: [String] {
@@ -292,6 +300,14 @@ private final class AuthorizedDirectorySession {
                     refreshStoredBookmark(refreshed, preservingID: bookmark.id)
                 }
             } catch {
+                if allowLocalPathFallback,
+                   activateLocalPathFallback(for: bookmark) {
+                    NSLog(
+                        "MacNewFileKit using local path fallback for %@",
+                        bookmark.displayPath
+                    )
+                    continue
+                }
                 NSLog(
                     "MacNewFileKit could not restore folder access for %@: %@",
                     bookmark.displayPath,
@@ -299,6 +315,23 @@ private final class AuthorizedDirectorySession {
                 )
             }
         }
+    }
+
+    private func activateLocalPathFallback(
+        for bookmark: AuthorizedDirectoryBookmark
+    ) -> Bool {
+        let url = URL(fileURLWithPath: bookmark.displayPath, isDirectory: true)
+            .standardizedFileURL
+            .resolvingSymlinksInPath()
+        var isDirectory: ObjCBool = false
+        guard FileManager.default.fileExists(atPath: url.path, isDirectory: &isDirectory),
+              isDirectory.boolValue
+        else {
+            return false
+        }
+
+        activeAccess[bookmark.id] = Access(url: url, didStartSecurityScope: false)
+        return true
     }
 
     func contains(_ directoryURL: URL) -> Bool {

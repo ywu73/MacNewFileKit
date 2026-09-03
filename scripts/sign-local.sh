@@ -7,6 +7,7 @@ PROJECT_ROOT=$(dirname "$SCRIPT_DIR")
 APP_PATH=${1:-"$PROJECT_ROOT/.build/xcode/Build/Products/Debug/MacNewFileKit.app"}
 SIGNING_PROFILE=${2:-"local-global"}
 EXTENSION_PATH="$APP_PATH/Contents/PlugIns/MacNewFileKitFinder.appex"
+EXTENSION_INFO_PLIST="$EXTENSION_PATH/Contents/Info.plist"
 APP_ENTITLEMENTS="$PROJECT_ROOT/Config/MacNewFileKit.entitlements"
 SHARED_LOCAL_REQUIREMENT='=designated => identifier "io.github.ywu73.MacNewFileKit" or identifier "io.github.ywu73.MacNewFileKit.FinderSync"'
 
@@ -61,6 +62,20 @@ if [ ! -d "$EXTENSION_PATH" ]; then
     exit 2
 fi
 
+if [ "$SIGNING_PROFILE" = "local-global" ]; then
+    /usr/libexec/PlistBuddy \
+        -c "Add :MacNewFileKitLocalPathFallback bool true" \
+        "$EXTENSION_INFO_PLIST" 2>/dev/null \
+        || /usr/libexec/PlistBuddy \
+            -c "Set :MacNewFileKitLocalPathFallback true" \
+            "$EXTENSION_INFO_PLIST"
+else
+    /usr/libexec/PlistBuddy \
+        -c "Delete :MacNewFileKitLocalPathFallback" \
+        "$EXTENSION_INFO_PLIST" 2>/dev/null \
+        || true
+fi
+
 echo "Signing Finder extension ad hoc with profile: $SIGNING_PROFILE"
 sign_bundle \
     "$EXTENSION_PATH" \
@@ -78,5 +93,18 @@ echo "Verifying nested extension signature..."
 
 echo "Verifying containing app and nested code..."
 /usr/bin/codesign --verify --deep --strict --verbose=2 "$APP_PATH"
+
+if [ "$SIGNING_PROFILE" = "local-global" ]; then
+    test "$(/usr/libexec/PlistBuddy \
+        -c 'Print :MacNewFileKitLocalPathFallback' \
+        "$EXTENSION_INFO_PLIST")" = "true"
+else
+    if /usr/libexec/PlistBuddy \
+        -c "Print :MacNewFileKitLocalPathFallback" \
+        "$EXTENSION_INFO_PLIST" >/dev/null 2>&1; then
+        echo "Local signing failed: restricted profile contains local path fallback." >&2
+        exit 2
+    fi
+fi
 
 echo "Local ad hoc signature ready ($SIGNING_PROFILE): $APP_PATH"
