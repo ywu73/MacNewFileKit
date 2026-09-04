@@ -1,11 +1,18 @@
 import Foundation
 
-public struct LocalFinderConfiguration: Sendable {
-    public static let pathFallbackInfoKey = "MacNewFileKitLocalPathFallback"
+public enum FinderAccessMode: Sendable {
+    case authorizedDirectories
+    case allLocalVolumes
+}
 
-    public let allowsPathFallback: Bool
+public struct LocalFinderConfiguration: Sendable {
+    public static let globalAccessInfoKey = "MacNewFileKitLocalGlobalAccess"
+
+    public let accessMode: FinderAccessMode
 
     public init(infoDictionary: [String: Any]) {
-        allowsPathFallback = infoDictionary[Self.pathFallbackInfoKey] as? Bool == true
+        accessMode = infoDictionary[Self.globalAccessInfoKey] as? Bool == true
+            ? .allLocalVolumes
+            : .authorizedDirectories
     }
 }

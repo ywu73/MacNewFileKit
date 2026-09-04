@@ -13,8 +13,10 @@ and user-defined text templates without overwriting existing files.
 - Editable custom-template names, extensions, initial content, and ordering
 - Shared settings through an App Group for distribution or a local shared
   preferences domain for ad hoc development
-- User-authorized folders backed by security-scoped bookmarks in signed
-  distribution builds and recorded paths in local ad hoc builds
+- Global Finder coverage on the startup disk and mounted volumes for local ad
+  hoc builds
+- User-authorized folders backed by security-scoped bookmarks for signed
+  distribution builds
 - Finder selection after creation
 
 MacNewFileKit does not use Accessibility permission or keyboard simulation. The
@@ -28,7 +30,7 @@ MacNewFileKit.app
 ├── MacNewFileKitApp       settings and extension onboarding
 ├── MacNewFileKitFinder    Finder Sync extension
 ├── FileCreationCore       exclusive creation and filename allocation
-└── MacNewFileKitShared    shared settings and authorized-folder model
+└── MacNewFileKitShared    shared settings and Finder access policy
 ```
 
 `FileCreationCore` uses `open(2)` with `O_CREAT | O_EXCL`. Name selection and
@@ -66,9 +68,9 @@ identity (`codesign --sign -`). The local build uses a shared preferences domain
 instead of an App Group container, because an ad hoc signature has no Team ID
 with which macOS can authorize the App Group. An ad hoc app and its extension
 also cannot restore each other's app-scoped security bookmarks. The local Finder
-extension therefore receives a development-only absolute-path exception, but it
-registers menus and accepts creation requests only inside paths explicitly added
-in the settings app. The signed app is written to
+extension therefore receives a development-only absolute-path exception and
+monitors the startup disk plus mounted volumes. It refreshes the mounted-volume
+set every three seconds. The signed app is written to
 `.build/xcode/Build/Products/Debug/MacNewFileKit.app`.
 
 This remains an ad hoc developer build. It proves which entitlements are embedded
@@ -76,11 +78,11 @@ and supports local runtime testing, but it is not a substitute for Developer ID
 signing, notarization, or App Review.
 
 To run the Finder integration, launch that app and use **Manage Finder
-Extensions** inside MacNewFileKit. The extension monitors only folders covered by
-a saved authorization record the user added in the containing app. Distribution
-builds resolve the record's security-scoped bookmark; local ad hoc builds fall
-back to its recorded path. Adding or removing a folder sends a cross-process
-notification so a running extension can refresh its monitored directory set.
+Extensions** inside MacNewFileKit. Local ad hoc builds expose the Finder menu in
+ordinary writable folders without requiring per-folder authorization.
+Distribution builds keep the narrower authorized-folder mode: they resolve each
+security-scoped bookmark and refresh their monitored roots after a cross-process
+notification from the containing app.
 
 The shared-preference temporary exception is for local testing only.
 Distribution to other Macs still requires an appropriate Apple signing identity,
@@ -103,16 +105,17 @@ Open the app once to inspect the extension status or use **Manage Finder
 Extensions** if macOS still requires approval. After the extension is enabled,
 the settings app may be quit; Finder loads the extension independently.
 
-This installation path is for local development only. It uses the ad hoc path
-fallback described above and is not a distributable release.
+This installation path is for local development only. It uses the ad hoc global
+access mode described above and is not a distributable release.
 
 ## Verification boundary
 
 Unit tests validate filename safety, content, collision handling, concurrent
 creation, custom-template editing rules, authorized-directory matching, and
-shared preference persistence. The build script validates the local ad hoc
-signature; Finder integration still requires extension enablement and live
-Finder interaction on macOS.
+shared preference persistence. Tests also verify that global access is opt-in and
+that its monitoring roots contain `/` plus mounted volumes. The build script
+validates the local ad hoc signature; Finder integration still requires extension
+enablement and live Finder interaction on macOS.
 
 `scripts/verify.sh` is deliberately fail-closed: it exits unsuccessfully when
 full Xcode or XcodeGen is missing instead of reporting a skipped integration

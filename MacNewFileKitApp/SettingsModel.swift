@@ -10,6 +10,7 @@ final class SettingsModel: ObservableObject {
     @Published var preferences: MacNewFileKitPreferences
     @Published var defaultBaseNameDraft: String
     @Published private(set) var extensionEnabled = false
+    @Published private(set) var finderAccessMode: FinderAccessMode
     @Published private(set) var authorizedDirectories: [AuthorizedDirectoryBookmark]
     @Published private(set) var persistenceError: String?
 
@@ -18,15 +19,16 @@ final class SettingsModel: ObservableObject {
     private let authorizedDirectoryResolver = AuthorizedDirectoryResolver()
 
     init() {
-        let sharedRepositories = SharedSettingsRepositories(
-            infoDictionary: Bundle.main.infoDictionary ?? [:]
-        )
+        let infoDictionary = Bundle.main.infoDictionary ?? [:]
+        let sharedRepositories = SharedSettingsRepositories(infoDictionary: infoDictionary)
+        let localConfiguration = LocalFinderConfiguration(infoDictionary: infoDictionary)
         let repository = sharedRepositories?.preferences
         let authorizedDirectoryRepository = sharedRepositories?.authorizedDirectories
         let preferences = repository?.load() ?? .default
         self.repository = repository
         self.preferences = preferences
         self.defaultBaseNameDraft = preferences.defaultBaseName
+        self.finderAccessMode = localConfiguration.accessMode
         self.authorizedDirectoryRepository = authorizedDirectoryRepository
         self.authorizedDirectories = authorizedDirectoryRepository?.load() ?? []
         refreshExtensionStatus()

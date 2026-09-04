@@ -11,7 +11,9 @@ final class FinderSync: FIFinderSync {
     private let creator = FileCreator()
     private let targetResolver = FinderTargetResolver()
     private let repository: PreferenceRepository?
+    private let accessPolicy: FinderAccessPolicy
     private let authorizedDirectorySession: AuthorizedDirectorySession
+    private var volumeRefreshTimer: DispatchSourceTimer?
     private var customTemplateIDsByTag: [Int: UUID] = [:]
 
     override init() {
@@ -19,14 +21,15 @@ final class FinderSync: FIFinderSync {
         let sharedRepositories = SharedSettingsRepositories(infoDictionary: infoDictionary)
         let localConfiguration = LocalFinderConfiguration(infoDictionary: infoDictionary)
         repository = sharedRepositories?.preferences
+        accessPolicy = FinderAccessPolicy(mode: localConfiguration.accessMode)
         authorizedDirectorySession = AuthorizedDirectorySession(
-            repository: sharedRepositories?.authorizedDirectories,
-            allowLocalPathFallback: localConfiguration.allowsPathFallback
+            repository: sharedRepositories?.authorizedDirectories
         )
 
         super.init()
 
         updateMonitoringDirectories()
+        startVolumeRefreshTimerIfNeeded()
         DistributedNotificationCenter.default().addObserver(
             self,
             selector: #selector(authorizedDirectoriesDidChange),
@@ -37,6 +40,7 @@ final class FinderSync: FIFinderSync {
     }
 
     deinit {
+        volumeRefreshTimer?.cancel()
         DistributedNotificationCenter.default().removeObserver(self)
     }
 
@@ -49,17 +53,16 @@ final class FinderSync: FIFinderSync {
             return nil
         }
 
-        authorizedDirectorySession.refresh()
-        let isAuthorized = authorizedDirectorySession.contains(directoryURL)
+        let isPermitted = permitsAccess(to: directoryURL)
         #if DEBUG
         NSLog(
-            "MacNewFileKit menu target=%@ authorized=%d roots=%@",
+            "MacNewFileKit menu target=%@ permitted=%d roots=%@",
             directoryURL.path,
-            isAuthorized,
-            authorizedDirectorySession.rootPaths.joined(separator: ", ")
+            isPermitted,
+            monitoringRootPaths.joined(separator: ", ")
         )
         #endif
-        guard isAuthorized else { return nil }
+        guard isPermitted else { return nil }
 
         let preferences = repository?.load() ?? .default
         let menu = NSMenu(title: "MacNewFileKit")
@@ -101,7 +104,7 @@ final class FinderSync: FIFinderSync {
     @objc
     private func createBuiltInFile(_ sender: NSMenuItem) {
         guard let template = builtInTemplate(for: sender),
-              let directoryURL = authorizedTargetDirectoryURL()
+              let directoryURL = permittedTargetDirectoryURL()
         else {
             return
         }
@@ -125,7 +128,7 @@ final class FinderSync: FIFinderSync {
     private func createCustomFile(_ sender: NSMenuItem) {
         let preferences = repository?.load() ?? .default
         guard let template = customTemplate(for: sender, in: preferences),
-              let directoryURL = authorizedTargetDirectoryURL()
+              let directoryURL = permittedTargetDirectoryURL()
         else {
             return
         }
@@ -197,19 +200,18 @@ final class FinderSync: FIFinderSync {
         )
     }
 
-    private func authorizedTargetDirectoryURL() -> URL? {
+    private func permittedTargetDirectoryURL() -> URL? {
         guard let directoryURL = targetDirectoryURL() else { return nil }
-        authorizedDirectorySession.refresh()
-        let isAuthorized = authorizedDirectorySession.contains(directoryURL)
+        let isPermitted = permitsAccess(to: directoryURL)
         #if DEBUG
         NSLog(
-            "MacNewFileKit action target=%@ authorized=%d roots=%@",
+            "MacNewFileKit action target=%@ permitted=%d roots=%@",
             directoryURL.path,
-            isAuthorized,
-            authorizedDirectorySession.rootPaths.joined(separator: ", ")
+            isPermitted,
+            monitoringRootPaths.joined(separator: ", ")
         )
         #endif
-        return isAuthorized ? directoryURL : nil
+        return isPermitted ? directoryURL : nil
     }
 
     @objc
@@ -218,8 +220,55 @@ final class FinderSync: FIFinderSync {
     }
 
     private func updateMonitoringDirectories() {
-        authorizedDirectorySession.refresh()
-        controller.directoryURLs = authorizedDirectorySession.rootURLs
+        let authorizedURLs: Set<URL>
+        switch accessPolicy.mode {
+        case .authorizedDirectories:
+            authorizedDirectorySession.refresh()
+            authorizedURLs = authorizedDirectorySession.rootURLs
+        case .allLocalVolumes:
+            authorizedURLs = []
+        }
+
+        let mountedVolumeURLs = FileManager.default.mountedVolumeURLs(
+            includingResourceValuesForKeys: nil,
+            options: [.skipHiddenVolumes]
+        ) ?? []
+        controller.directoryURLs = accessPolicy.monitoringURLs(
+            authorizedDirectoryURLs: authorizedURLs,
+            mountedVolumeURLs: mountedVolumeURLs
+        )
+    }
+
+    private func permitsAccess(to directoryURL: URL) -> Bool {
+        switch accessPolicy.mode {
+        case .authorizedDirectories:
+            authorizedDirectorySession.refresh()
+            return accessPolicy.permitsTarget(
+                isWithinAuthorizedDirectory: authorizedDirectorySession.contains(directoryURL)
+            )
+        case .allLocalVolumes:
+            return accessPolicy.permitsTarget(isWithinAuthorizedDirectory: false)
+        }
+    }
+
+    private func startVolumeRefreshTimerIfNeeded() {
+        guard accessPolicy.mode == .allLocalVolumes else { return }
+
+        let timer = DispatchSource.makeTimerSource(queue: .main)
+        timer.schedule(
+            deadline: .now() + .seconds(3),
+            repeating: .seconds(3),
+            leeway: .seconds(1)
+        )
+        timer.setEventHandler { [weak self] in
+            self?.updateMonitoringDirectories()
+        }
+        timer.resume()
+        volumeRefreshTimer = timer
+    }
+
+    private var monitoringRootPaths: [String] {
+        (controller.directoryURLs ?? []).map(\.path).sorted()
     }
 
     private func isDirectory(_ url: URL) -> Bool {
@@ -275,16 +324,11 @@ private final class AuthorizedDirectorySession {
 
     private let repository: AuthorizedDirectoryRepository?
     private let resolver = AuthorizedDirectoryResolver()
-    private let allowLocalPathFallback: Bool
     private var loadedBookmarks: [AuthorizedDirectoryBookmark] = []
     private var activeAccess: [UUID: Access] = [:]
 
-    init(
-        repository: AuthorizedDirectoryRepository?,
-        allowLocalPathFallback: Bool = false
-    ) {
+    init(repository: AuthorizedDirectoryRepository?) {
         self.repository = repository
-        self.allowLocalPathFallback = allowLocalPathFallback
     }
 
     var rootPaths: [String] {
@@ -320,14 +364,6 @@ private final class AuthorizedDirectorySession {
                     refreshStoredBookmark(refreshed, preservingID: bookmark.id)
                 }
             } catch {
-                if allowLocalPathFallback,
-                   activateLocalPathFallback(for: bookmark) {
-                    NSLog(
-                        "MacNewFileKit using local path fallback for %@",
-                        bookmark.displayPath
-                    )
-                    continue
-                }
                 NSLog(
                     "MacNewFileKit could not restore folder access for %@: %@",
                     bookmark.displayPath,
@@ -335,23 +371,6 @@ private final class AuthorizedDirectorySession {
                 )
             }
         }
-    }
-
-    private func activateLocalPathFallback(
-        for bookmark: AuthorizedDirectoryBookmark
-    ) -> Bool {
-        let url = URL(fileURLWithPath: bookmark.displayPath, isDirectory: true)
-            .standardizedFileURL
-            .resolvingSymlinksInPath()
-        var isDirectory: ObjCBool = false
-        guard FileManager.default.fileExists(atPath: url.path, isDirectory: &isDirectory),
-              isDirectory.boolValue
-        else {
-            return false
-        }
-
-        activeAccess[bookmark.id] = Access(url: url, didStartSecurityScope: false)
-        return true
     }
 
     func contains(_ directoryURL: URL) -> Bool {

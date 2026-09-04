@@ -11,6 +11,7 @@ APP_INFO_PLIST="$APP_PATH/Contents/Info.plist"
 APP_ENTITLEMENTS="$PROJECT_ROOT/Config/MacNewFileKit.local.entitlements"
 EXTENSION_ENTITLEMENTS="$PROJECT_ROOT/Config/MacNewFileKitFinder.local.entitlements"
 SHARED_PREFERENCES_DOMAIN="io.github.ywu73.MacNewFileKit.shared"
+GLOBAL_ACCESS_KEY="MacNewFileKitLocalGlobalAccess"
 SHARED_LOCAL_REQUIREMENT='=designated => identifier "io.github.ywu73.MacNewFileKit" or identifier "io.github.ywu73.MacNewFileKit.FinderSync"'
 
 sign_bundle() {
@@ -54,13 +55,25 @@ fi
         "$EXTENSION_INFO_PLIST"
 
 /usr/libexec/PlistBuddy \
-    -c "Add :MacNewFileKitLocalPathFallback bool true" \
+    -c "Add :$GLOBAL_ACCESS_KEY bool true" \
+    "$APP_INFO_PLIST" 2>/dev/null \
+    || /usr/libexec/PlistBuddy \
+        -c "Set :$GLOBAL_ACCESS_KEY true" \
+        "$APP_INFO_PLIST"
+
+/usr/libexec/PlistBuddy \
+    -c "Add :$GLOBAL_ACCESS_KEY bool true" \
     "$EXTENSION_INFO_PLIST" 2>/dev/null \
     || /usr/libexec/PlistBuddy \
-        -c "Set :MacNewFileKitLocalPathFallback true" \
+        -c "Set :$GLOBAL_ACCESS_KEY true" \
         "$EXTENSION_INFO_PLIST"
 
-echo "Signing Finder extension with local path-fallback entitlements..."
+/usr/libexec/PlistBuddy \
+    -c "Delete :MacNewFileKitLocalPathFallback" \
+    "$EXTENSION_INFO_PLIST" 2>/dev/null \
+    || true
+
+echo "Signing Finder extension with local global-access entitlements..."
 sign_bundle \
     "$EXTENSION_PATH" \
     "$EXTENSION_ENTITLEMENTS" \
@@ -78,11 +91,14 @@ echo "Verifying nested extension signature..."
 echo "Verifying containing app and nested code..."
 /usr/bin/codesign --verify --deep --strict --verbose=2 "$APP_PATH"
 
-if [ "$(/usr/libexec/PlistBuddy \
-    -c 'Print :MacNewFileKitLocalPathFallback' \
-    "$EXTENSION_INFO_PLIST")" != "true" ]; then
-    echo "Local signing failed: local path fallback is not enabled." >&2
-    exit 2
-fi
+for info_plist in "$APP_INFO_PLIST" "$EXTENSION_INFO_PLIST"
+do
+    if [ "$(/usr/libexec/PlistBuddy \
+        -c "Print :$GLOBAL_ACCESS_KEY" \
+        "$info_plist")" != "true" ]; then
+        echo "Local signing failed: global Finder access is not enabled." >&2
+        exit 2
+    fi
+done
 
 echo "Local ad hoc signature ready: $APP_PATH"

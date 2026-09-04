@@ -25,30 +25,41 @@ struct ContentView: View {
                 }
             }
 
-            Section("Authorized Folders") {
-                if model.authorizedDirectories.isEmpty {
-                    Text("Choose at least one folder before using the Finder menu.")
+            if model.finderAccessMode == .allLocalVolumes {
+                Section("Finder Access") {
+                    Text(
+                        "Global access is enabled for this local build. "
+                            + "New File is available in writable Finder folders "
+                            + "on the startup disk and mounted volumes."
+                    )
                         .foregroundStyle(.secondary)
                 }
-
-                ForEach(model.authorizedDirectories) { bookmark in
-                    HStack {
-                        Text(bookmark.displayPath)
-                            .lineLimit(1)
-                            .truncationMode(.middle)
-                        Spacer()
-                        Button(role: .destructive) {
-                            model.removeAuthorizedDirectory(id: bookmark.id)
-                        } label: {
-                            Image(systemName: "trash")
-                        }
-                        .buttonStyle(.borderless)
-                        .help("Remove Folder")
+            } else {
+                Section("Authorized Folders") {
+                    if model.authorizedDirectories.isEmpty {
+                        Text("Choose at least one folder before using the Finder menu.")
+                            .foregroundStyle(.secondary)
                     }
-                }
 
-                Button("Allow Folder…") {
-                    model.authorizeDirectory()
+                    ForEach(model.authorizedDirectories) { bookmark in
+                        HStack {
+                            Text(bookmark.displayPath)
+                                .lineLimit(1)
+                                .truncationMode(.middle)
+                            Spacer()
+                            Button(role: .destructive) {
+                                model.removeAuthorizedDirectory(id: bookmark.id)
+                            } label: {
+                                Image(systemName: "trash")
+                            }
+                            .buttonStyle(.borderless)
+                            .help("Remove Folder")
+                        }
+                    }
+
+                    Button("Allow Folder…") {
+                        model.authorizeDirectory()
+                    }
                 }
             }
 

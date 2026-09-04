@@ -5,16 +5,6 @@ import Testing
 
 @Suite("PreferenceRepository")
 struct PreferenceRepositoryTests {
-    @Test("local Finder path fallback is opt-in")
-    func localFinderPathFallbackIsOptIn() {
-        #expect(!LocalFinderConfiguration(infoDictionary: [:]).allowsPathFallback)
-        #expect(
-            LocalFinderConfiguration(
-                infoDictionary: ["MacNewFileKitLocalPathFallback": true]
-            ).allowsPathFallback
-        )
-    }
-
     @Test("local shared settings are visible to a new process repository")
     func localSharedSettingsAreShared() throws {
         let suiteName = "MacNewFileKitLocalSharedTests.\(UUID().uuidString)"

@@ -51,6 +51,6 @@ if [ "$(/usr/libexec/PlistBuddy \
     -c 'Print :com.apple.security.temporary-exception.files.absolute-path.read-write:0' \
     Config/MacNewFileKitFinder.local.entitlements)" != "/" ]
 then
-    echo "Core verification failed: local Finder path fallback lacks its matching entitlement." >&2
+    echo "Core verification failed: local global Finder access lacks its matching entitlement." >&2
     exit 2
 fi
