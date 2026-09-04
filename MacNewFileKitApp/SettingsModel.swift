@@ -18,11 +18,11 @@ final class SettingsModel: ObservableObject {
     private let authorizedDirectoryResolver = AuthorizedDirectoryResolver()
 
     init() {
-        let suiteName = Bundle.main.object(
-            forInfoDictionaryKey: "MacNewFileKitAppGroupIdentifier"
-        ) as? String ?? "group.io.github.ywu73.MacNewFileKit"
-        let repository = PreferenceRepository(suiteName: suiteName)
-        let authorizedDirectoryRepository = AuthorizedDirectoryRepository(suiteName: suiteName)
+        let sharedRepositories = SharedSettingsRepositories(
+            infoDictionary: Bundle.main.infoDictionary ?? [:]
+        )
+        let repository = sharedRepositories?.preferences
+        let authorizedDirectoryRepository = sharedRepositories?.authorizedDirectories
         let preferences = repository?.load() ?? .default
         self.repository = repository
         self.preferences = preferences
@@ -131,6 +131,7 @@ final class SettingsModel: ObservableObject {
             try authorizedDirectoryRepository?.save(bookmarks)
             authorizedDirectories = bookmarks
             persistenceError = nil
+            notifyAuthorizedDirectoriesDidChange()
         } catch {
             persistenceError = localizedDescription(for: error)
         }
@@ -142,6 +143,7 @@ final class SettingsModel: ObservableObject {
             try authorizedDirectoryRepository?.save(bookmarks)
             authorizedDirectories = bookmarks
             persistenceError = nil
+            notifyAuthorizedDirectoriesDidChange()
         } catch {
             persistenceError = localizedDescription(for: error)
         }
@@ -183,6 +185,15 @@ final class SettingsModel: ObservableObject {
             throw SettingsError.sharedAppGroupUnavailable
         }
         try repository.save(preferences)
+    }
+
+    private func notifyAuthorizedDirectoriesDidChange() {
+        DistributedNotificationCenter.default().postNotificationName(
+            MacNewFileKitNotifications.authorizedDirectoriesDidChange,
+            object: nil,
+            userInfo: nil,
+            deliverImmediately: true
+        )
     }
 
     private func localizedDescription(for error: Error) -> String {

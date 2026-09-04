@@ -15,23 +15,29 @@ final class FinderSync: FIFinderSync {
     private var customTemplateIDsByTag: [Int: UUID] = [:]
 
     override init() {
-        let suiteName = Bundle.main.object(
-            forInfoDictionaryKey: "MacNewFileKitAppGroupIdentifier"
-        ) as? String ?? "group.io.github.ywu73.MacNewFileKit"
-        repository = PreferenceRepository(suiteName: suiteName)
+        let infoDictionary = Bundle.main.infoDictionary ?? [:]
+        let sharedRepositories = SharedSettingsRepositories(infoDictionary: infoDictionary)
+        let localConfiguration = LocalFinderConfiguration(infoDictionary: infoDictionary)
+        repository = sharedRepositories?.preferences
         authorizedDirectorySession = AuthorizedDirectorySession(
-            repository: AuthorizedDirectoryRepository(suiteName: suiteName),
-            allowLocalPathFallback: Bundle.main.object(
-                forInfoDictionaryKey: "MacNewFileKitLocalPathFallback"
-            ) as? Bool == true
+            repository: sharedRepositories?.authorizedDirectories,
+            allowLocalPathFallback: localConfiguration.allowsPathFallback
         )
 
         super.init()
 
-        // Monitoring root exposes the menu throughout local Finder locations.
-        // Actual availability and sandbox behavior must be verified on a signed build.
-        controller.directoryURLs = [URL(fileURLWithPath: "/", isDirectory: true)]
-        authorizedDirectorySession.refresh()
+        updateMonitoringDirectories()
+        DistributedNotificationCenter.default().addObserver(
+            self,
+            selector: #selector(authorizedDirectoriesDidChange),
+            name: MacNewFileKitNotifications.authorizedDirectoriesDidChange,
+            object: nil,
+            suspensionBehavior: .deliverImmediately
+        )
+    }
+
+    deinit {
+        DistributedNotificationCenter.default().removeObserver(self)
     }
 
     override func menu(for menuKind: FIMenuKind) -> NSMenu? {
@@ -206,6 +212,16 @@ final class FinderSync: FIFinderSync {
         return isAuthorized ? directoryURL : nil
     }
 
+    @objc
+    private func authorizedDirectoriesDidChange() {
+        updateMonitoringDirectories()
+    }
+
+    private func updateMonitoringDirectories() {
+        authorizedDirectorySession.refresh()
+        controller.directoryURLs = authorizedDirectorySession.rootURLs
+    }
+
     private func isDirectory(_ url: URL) -> Bool {
         (try? url.resourceValues(forKeys: [.isDirectoryKey]).isDirectory) == true
     }
@@ -272,7 +288,11 @@ private final class AuthorizedDirectorySession {
     }
 
     var rootPaths: [String] {
-        activeAccess.values.map(\.url.path).sorted()
+        rootURLs.map(\.path).sorted()
+    }
+
+    var rootURLs: Set<URL> {
+        Set(activeAccess.values.map(\.url))
     }
 
     deinit {

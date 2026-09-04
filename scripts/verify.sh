@@ -2,8 +2,6 @@
 
 set -eu
 
-SIGNING_PROFILE=${MACNEWFILEKIT_SIGNING_PROFILE:-"local-global"}
-
 scripts/verify-core.sh
 
 if ! command -v xcodebuild >/dev/null 2>&1 \
@@ -27,6 +25,4 @@ xcodebuild \
     CODE_SIGNING_ALLOWED=NO \
     build
 
-scripts/sign-local.sh \
-    .build/xcode/Build/Products/Debug/MacNewFileKit.app \
-    "$SIGNING_PROFILE"
+scripts/sign-local.sh .build/xcode/Build/Products/Debug/MacNewFileKit.app

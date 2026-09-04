@@ -5,6 +5,47 @@ import Testing
 
 @Suite("PreferenceRepository")
 struct PreferenceRepositoryTests {
+    @Test("local Finder path fallback is opt-in")
+    func localFinderPathFallbackIsOptIn() {
+        #expect(!LocalFinderConfiguration(infoDictionary: [:]).allowsPathFallback)
+        #expect(
+            LocalFinderConfiguration(
+                infoDictionary: ["MacNewFileKitLocalPathFallback": true]
+            ).allowsPathFallback
+        )
+    }
+
+    @Test("local shared settings are visible to a new process repository")
+    func localSharedSettingsAreShared() throws {
+        let suiteName = "MacNewFileKitLocalSharedTests.\(UUID().uuidString)"
+        defer { UserDefaults.standard.removePersistentDomain(forName: suiteName) }
+
+        let infoDictionary: [String: Any] = [
+            "MacNewFileKitSharedPreferencesDomain": suiteName,
+            "MacNewFileKitAppGroupIdentifier": "group.invalid.fallback",
+        ]
+        let writer = try #require(
+            SharedSettingsRepositories(infoDictionary: infoDictionary)
+        )
+        let reader = try #require(
+            SharedSettingsRepositories(infoDictionary: infoDictionary)
+        )
+        let preferences = MacNewFileKitPreferences(
+            defaultBaseName: "draft",
+            enabledTemplates: [.text, .markdown]
+        )
+        let bookmark = AuthorizedDirectoryBookmark(
+            displayPath: "/tmp/work",
+            bookmarkData: Data([7, 8, 9])
+        )
+
+        try writer.preferences.save(preferences)
+        try writer.authorizedDirectories.save([bookmark])
+
+        #expect(reader.preferences.load() == preferences)
+        #expect(reader.authorizedDirectories.load() == [bookmark])
+    }
+
     @Test("returns defaults when no preferences are saved")
     func returnsDefaults() {
         withIsolatedRepository { repository in

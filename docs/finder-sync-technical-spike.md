@@ -37,38 +37,48 @@ menu items into its own context menu, so actions use standard menu tags with a
 title fallback instead.
 
 The standard sandbox entitlement allows the menu action to run but blocks writes
-to arbitrary Finder locations. The local ad hoc signing flow therefore uses a
-separate entitlement file with a temporary `/` read/write exception. This proves
-the Finder workflow locally without silently broadening the release entitlement.
+to arbitrary Finder locations. Live testing proved that app-scoped bookmarks
+created by the ad hoc containing app cannot be restored by its separately hosted
+Finder extension, even when both use a shared designated requirement. The local
+signing flow therefore uses the saved authorized paths plus a development-only
+absolute-path exception. It does not access an App Group container, and the
+extension still registers menus only under saved authorized paths.
+
+The installed local build was verified in Finder by creating `untitled.txt`.
+Chrome then opened five consecutive webpage Save panels, and TextEdit opened
+three native Save panels. The panels launched fresh Finder extension instances,
+and none displayed the macOS prompt to access another app's data. Because the
+prompt was caused by the extension's process-wide App Group access, removing
+that access fixes the shared Save-panel path rather than a browser-specific path.
 
 ## Authorized-folder prototype
 
-The containing app can now create app-scoped security bookmarks for directories
-the user selects with `NSOpenPanel` and store them in the App Group. The Finder
-extension resolves those bookmarks, keeps their security scopes active, and only
-offers creation when the resolved target is inside an authorized root. Path
-matching uses normalized path components rather than string prefixes.
+The containing app creates app-scoped security bookmarks for directories the
+user selects with `NSOpenPanel`. A properly signed distribution stores them in
+the App Group; the local ad hoc build stores them in a shared preferences domain.
+The Finder extension resolves those bookmarks in a properly signed build and
+keeps their security scopes active. For an ad hoc local build, it uses the saved
+display path because cross-identity bookmark restoration fails. Both modes
+register only those roots with `directoryURLs`. Path matching uses normalized path
+components rather than string prefixes. A distributed notification refreshes the
+registered roots after the user changes authorization.
 
-`scripts/verify.sh` accepts the `authorized-folders` signing profile through
-`MACNEWFILEKIT_SIGNING_PROFILE`. That profile omits the temporary `/` write
-exception so the bookmark path can be tested without a broader entitlement
-masking failures. Successful build and signature verification alone do not prove
-that bookmark access survives Finder extension restart; that remains a live-test
-exit criterion.
+Successful build and signature verification alone do not prove that bookmark
+access survives Finder extension restart. That behavior remains a live-test exit
+criterion for a properly Team-signed distribution build.
 
 ## Remaining assumptions
 
 The following must not be treated as completed until tested with a signed app:
 
-1. Monitoring `/` exposes the menu consistently across ordinary local folders,
-   Desktop, and mounted external volumes.
-2. Security-scoped directory bookmarks remain usable after Finder and extension
-   restarts when signed without the local temporary exception.
+1. A properly Team-signed distribution lets the containing app and Finder
+   extension share security-scoped directory bookmarks through the App Group.
+2. Finder applies monitored-directory updates delivered by the containing app
+   without requiring an extension restart.
 3. Finder places the menu at an acceptable depth on every supported macOS
    version.
 4. `activateFileViewerSelecting` reliably selects the new file without opening
    a duplicate Finder window.
-5. Finder refreshes App Group preferences without restarting the extension.
 
 ## Manual test matrix
 

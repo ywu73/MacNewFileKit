@@ -34,5 +34,23 @@ swiftc \
 
 plutil -lint \
     Config/MacNewFileKit.entitlements \
+    Config/MacNewFileKit.local.entitlements \
     Config/MacNewFileKitFinder.entitlements \
     Config/MacNewFileKitFinder.local.entitlements
+
+if rg -q \
+    'com\.apple\.security\.application-groups' \
+    Config/MacNewFileKit.local.entitlements \
+    Config/MacNewFileKitFinder.local.entitlements
+then
+    echo "Core verification failed: local entitlements include an App Group." >&2
+    exit 2
+fi
+
+if [ "$(/usr/libexec/PlistBuddy \
+    -c 'Print :com.apple.security.temporary-exception.files.absolute-path.read-write:0' \
+    Config/MacNewFileKitFinder.local.entitlements)" != "/" ]
+then
+    echo "Core verification failed: local Finder path fallback lacks its matching entitlement." >&2
+    exit 2
+fi

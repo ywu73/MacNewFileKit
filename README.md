@@ -11,8 +11,10 @@ and user-defined text templates without overwriting existing files.
 - Text, Markdown, JSON, Word (`.docx`), Excel (`.xlsx`), PowerPoint (`.pptx`),
   and custom text templates
 - Editable custom-template names, extensions, initial content, and ordering
-- Shared settings through an App Group
-- User-authorized folders backed by security-scoped bookmarks
+- Shared settings through an App Group for distribution or a local shared
+  preferences domain for ad hoc development
+- User-authorized folders backed by security-scoped bookmarks in signed
+  distribution builds and recorded paths in local ad hoc builds
 - Finder selection after creation
 
 MacNewFileKit does not use Accessibility permission or keyboard simulation. The
@@ -26,7 +28,7 @@ MacNewFileKit.app
 ├── MacNewFileKitApp       settings and extension onboarding
 ├── MacNewFileKitFinder    Finder Sync extension
 ├── FileCreationCore       exclusive creation and filename allocation
-└── MacNewFileKitShared    App Group preference model
+└── MacNewFileKitShared    shared settings and authorized-folder model
 ```
 
 `FileCreationCore` uses `open(2)` with `O_CREAT | O_EXCL`. Name selection and
@@ -60,36 +62,29 @@ scripts/verify.sh
 
 The verification script builds with Xcode-managed signing disabled, then signs
 the embedded Finder extension before the containing app with a local ad hoc
-identity (`codesign --sign -`). It preserves the sandbox and App Group
-entitlements and finishes with strict signature verification. The signed app is
-written to `.build/xcode/Build/Products/Debug/MacNewFileKit.app`.
-
-The ad hoc Finder extension uses
-`Config/MacNewFileKitFinder.local.entitlements`, which adds a temporary `/`
-read/write sandbox exception so the global Finder workflow can be exercised on
-the developer's Mac. The normal `Config/MacNewFileKitFinder.entitlements` does not
-contain that exception.
-
-To exercise the authorized-folder design without the temporary `/` exception,
-build and sign with the restricted local profile:
-
-```sh
-MACNEWFILEKIT_SIGNING_PROFILE=authorized-folders scripts/verify.sh
-```
+identity (`codesign --sign -`). The local build uses a shared preferences domain
+instead of an App Group container, because an ad hoc signature has no Team ID
+with which macOS can authorize the App Group. An ad hoc app and its extension
+also cannot restore each other's app-scoped security bookmarks. The local Finder
+extension therefore receives a development-only absolute-path exception, but it
+registers menus and accepts creation requests only inside paths explicitly added
+in the settings app. The signed app is written to
+`.build/xcode/Build/Products/Debug/MacNewFileKit.app`.
 
 This remains an ad hoc developer build. It proves which entitlements are embedded
 and supports local runtime testing, but it is not a substitute for Developer ID
 signing, notarization, or App Review.
 
 To run the Finder integration, launch that app and use **Manage Finder
-Extensions** inside MacNewFileKit. The extension monitors `/` so Finder can ask it
-for menus globally, but it only returns the New File menu for folders covered by
-a bookmark the user added in the containing app. Monitoring and write permission
-are separate: the bookmark session controls whether creation is offered.
+Extensions** inside MacNewFileKit. The extension monitors only folders covered by
+a saved authorization record the user added in the containing app. Distribution
+builds resolve the record's security-scoped bookmark; local ad hoc builds fall
+back to its recorded path. Adding or removing a folder sends a cross-process
+notification so a running extension can refresh its monitored directory set.
 
-Ad hoc signing and the temporary filesystem exception are for local testing
-only. Distribution to other Macs still requires an appropriate Apple signing
-identity, notarization, and a release-safe filesystem-access design.
+The shared-preference temporary exception is for local testing only.
+Distribution to other Macs still requires an appropriate Apple signing identity,
+an authorized App Group, notarization, and App Review.
 
 ## Local installation
 
@@ -108,9 +103,8 @@ Open the app once to inspect the extension status or use **Manage Finder
 Extensions** if macOS still requires approval. After the extension is enabled,
 the settings app may be quit; Finder loads the extension independently.
 
-This installation path is for local development only. It uses the ad hoc build
-and temporary filesystem exception described above, and is not a distributable
-release.
+This installation path is for local development only. It uses the ad hoc path
+fallback described above and is not a distributable release.
 
 ## Verification boundary
 
