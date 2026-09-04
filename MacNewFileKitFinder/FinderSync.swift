@@ -82,7 +82,6 @@ final class FinderSync: FIFinderSync {
 
         customTemplateIDsByTag.removeAll(keepingCapacity: true)
         if !preferences.customTemplates.isEmpty {
-            submenu.addItem(.separator())
             for (index, customTemplate) in preferences.customTemplates.enumerated() {
                 let item = NSMenuItem(
                     title: customTemplate.displayName,
